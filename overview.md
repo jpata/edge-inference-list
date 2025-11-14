@@ -21,19 +21,19 @@ Here's how the major tools map to the stages:
 | **Stage 1: Frontend Training & Quantization** |
 | QKeras / HGQ | Keras (TensorFlow, JAX, PyTorch) | Arbitrary-Precision QAT | FPGAs (via hls4ml) |
 | Brevitas | PyTorch | Arbitrary-Precision QAT | FPGAs (via FINN) |
-| TFMOT | TensorFlow / Keras | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs, EdgeTPU (via TFLite) |
-| PyTorch torch.ao | PyTorch | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs (via ExecuTorch) |
+| TFMOT | TensorFlow / Keras | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs, NPUs (via LiteRT) |
+| torchao | PyTorch | Advanced QAT/PTQ (INT4/8, FP8, Sparsity) | Mobile CPUs, GPUs, NPUs (via ExecuTorch) |
 | **Stage 2: Intermediate Representation (IR) & Optimization** |
-| QONNX | ONNX-based (from Brevitas, QKeras) | Arbitrary-Precision | FPGAs (Hand-off to FINN, hls4ml) |
+| QONNX | ONNX-based (from Brevitas, QKeras) | Arbitrary-Precision, Minifloats | FPGAs (Hand-off to FINN, hls4ml) |
 | **Stage 3: Backend Compilation & Hardware Synthesis** |
 | hls4ml | Keras, PyTorch, ONNX, QONNX | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
 | FINN | QONNX (from Brevitas) | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
 | Vitis AI | TF, PyTorch, ONNX | 8-bit Integer PTQ/QAT | FPGAs / ACAPs (DPU/AIE Overlay) |
-| Apache TVM | All (via ONNX) | 8-bit, Mixed-Precision | CPUs, GPUs, Accelerators (e.g., DPU) |
-| Intel OpenVINO | TF, PyTorch, ONNX | 8-bit Integer | Intel CPUs, iGPUs, VPUs |
+| Apache TVM | All (via ONNX) | 8-bit, Mixed-Precision | CPUs, GPUs, Accelerators |
+| Intel OpenVINO | TF, PyTorch, ONNX | Advanced PTQ (INT4/8, NF4, etc.) via NNCF | Intel CPUs, iGPUs, NPUs |
 | **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime** |
-| ExecuTorch | PyTorch | 8-bit (from torch.ao) | Mobile CPUs, GPUs, DSPs |
-| TensorFlow Lite | TensorFlow | 8-bit (from TFMOT) | Mobile CPUs, GPUs, EdgeTPU |
+| ExecuTorch | PyTorch | Low-Precision (from torchao) | Mobile CPUs, GPUs, DSPs |
+| LiteRT | TF, PyTorch, JAX | Low-Precision (from TFMOT, etc.) | Mobile CPUs, GPUs, NPUs |
 | PYNQ | Python | N/A (Controls accelerator) | AMD-Xilinx SoCs (Zynq, Kria) |
 
 ## Frontend Quantization-Aware Training (QAT) Frameworks
@@ -57,11 +57,15 @@ A QAT algorithm that automatically finds the optimal bit-width for each paramete
 *   GitHub (HGQ2): [https://github.com/calad0i/HGQ2](https://github.com/calad0i/HGQ2)
 *   State: Stable / Superseded
 
-#### TensorFlow Model Optimization Toolkit (TFMOT)
+#### Google AI Edge (TFMOT & LiteRT)
 
-Google's toolkit for optimizing models. It focuses on 8-bit integer quantization for deployment to mobile CPUs, GPUs, and EdgeTPUs via TensorFlow Lite (TFLite). It is actively maintained and used for deploying models to the TensorFlow Lite ecosystem.
-*   GitHub: [https://github.com/tensorflow/model-optimization](https://github.com/tensorflow/model-optimization)
-*   State: Stable / Mature
+Google's edge ecosystem has been significantly updated. The long-standing **TensorFlow Lite (TFLite)** runtime has been deprecated as of 2025.
+*   **LiteRT:** The successor to TFLite, LiteRT is a new, independent, and multi-framework runtime designed to convert and run models from TensorFlow, PyTorch, and JAX. It forms the core of the **Google AI Edge** suite of tools. The goal is to provide a universal runtime with simplified hardware acceleration.
+    *   GitHub: [https://github.com/google-ai-edge/LiteRT](https://github.com/google-ai-edge/LiteRT)
+    *   State: Active & Strategic (Replacing TFLite)
+*   **TensorFlow Model Optimization Toolkit (TFMOT):** This toolkit is still used for quantization but now targets the new LiteRT runtime.
+    *   GitHub: [https://github.com/tensorflow/model-optimization](https://github.com/tensorflow/model-optimization)
+    *   State: Stable / Mature
 
 ### PyTorch Ecosystem
 
@@ -77,13 +81,15 @@ A mixed-precision quantization library that uses second-order information (the H
 *   GitHub: [https://github.com/Zhen-Dong/HAWQ](https://github.com/Zhen-Dong/HAWQ)
 *   State: Dormant
 
-#### PyTorch Native Quantization (torch.ao) & ExecuTorch
+#### PyTorch Edge Stack (torchao & ExecuTorch)
 
-PyTorch's native library (`torch.ao`) focuses on 8-bit PTQ and QAT. For edge deployment, **ExecuTorch** is the runtime for running quantized PyTorch models on mobile and embedded devices. This is the primary toolchain for PyTorch edge deployment. Both `torch.ao` (quantization) and `ExecuTorch` (runtime) are under active development.
-*   GitHub (Quantization): [https://github.com/pytorch/ao](https://github.com/pytorch/ao)
-*   State (torch.ao): Active R&D
-*   GitHub (Edge Runtime): [https://github.com/pytorch/executorch](https://github.com/pytorch/executorch)
-*   State (ExecuTorch): Active & Strategic
+The PyTorch ecosystem for edge deployment has been completely overhauled in 2025.
+*   **torchao:** The legacy `torch.ao.quantization` library is deprecated. **`torchao`** is the new, centralized library for all model optimization. It provides a unified workflow for Quantization-Aware Training (QAT), Post-Training Quantization (PTQ), and sparsity. It supports modern low-precision formats (e.g., INT8, INT4, FP8) and is designed to prepare models for deployment.
+    *   GitHub: [https://github.com/pytorch/ao](https://github.com/pytorch/ao)
+    *   State: Active & Strategic (Replacing torch.ao.quantization)
+*   **ExecuTorch:** Now at a stable 1.0 release, ExecuTorch is PyTorch's official solution for Ahead-of-Time (AOT) compilation and inference on edge devices (mobile, embedded). It runs models prepared with `torchao` without a conversion process, and is in production use at Meta.
+    *   GitHub: [https://github.com/pytorch/executorch](https://github.com/pytorch/executorch)
+    *   State: Stable & Strategic
 
 ### JAX Ecosystem
 
@@ -109,7 +115,7 @@ Allows models to be moved between frameworks. Its standard quantization support 
 
 ### QONNX (Quantized ONNX)
 
-An extension to ONNX created by the FINN and hls4ml communities. It adds custom operators to represent arbitrary-precision quantization for FPGA backend compilers. It is actively maintained and serves as the IR for the arbitrary-precision FPGA ecosystem.
+An extension to ONNX created by the FINN and hls4ml communities. It adds custom operators to represent arbitrary-precision fixed-point quantization. As of 2025, the standard is being extended to also represent **arbitrary-precision minifloats** (e.g., FP8, FP4) via a new `FloatQuant` operator. This is critical for representing models with high dynamic range, which are common in scientific applications, and enables new research into hardware-software co-design for FPGAs.
 *   GitHub: [https://github.com/fastmachinelearning/qonnx](https://github.com/fastmachinelearning/qonnx)
 *   State: Active & Strategic
 
@@ -156,19 +162,20 @@ These compilers target a wide range of hardware, not just FPGAs.
 
 ### Apache TVM
 
-An open-source ML compilation framework that ingests models from any framework (via ONNX) and generates machine code for targets like ARM CPUs, GPUs, and specialized accelerators. TVM is a compiler with an active codebase and a large research community.
+An open-source ML compilation framework that ingests models from any framework (via ONNX) and generates machine code for targets like ARM CPUs, GPUs, and specialized accelerators.
+A significant 2025 development is the **`tvm-ffi`** initiative, which creates a stable C ABI for ML kernels. This allows high-performance libraries (e.g., for custom scientific operators) to be compiled once and loaded by any major framework (PyTorch, JAX) without complex bindings, solving a major ecosystem fragmentation problem.
 *   GitHub: [https://github.com/apache/tvm](https://github.com/apache/tvm)
-*   State: Active (Research)
+*   State: Active (Research & Infrastructure)
 
 ### Intel OpenVINO
 
-Intel's open-source toolkit for optimizing and deploying AI inference on Intel hardware (CPUs, iGPUs, VPUs).
+Intel's open-source toolkit for optimizing and deploying AI inference on Intel hardware (CPUs, iGPUs, NPUs). The 2025 releases have aggressively pivoted the tool to support modern transformer-based models. Its optimization capabilities are centered on the **Neural Network Compression Framework (NNCF)**, which has been upgraded to support advanced weight compression (INT4/INT8, NF4) and other techniques relevant for large models.
 *   GitHub: [https://github.com/openvinotoolkit/openvino](https://github.com/openvinotoolkit/openvino)
 *   State: Active & Strategic
 
 ### Glow
 
-A machine learning compiler from Meta/PyTorch that used Ahead-of-Time (AOT) compilation to generate a self-contained executable for embedded systems. It was abandoned in favor of the ExecuTorch runtime.
+A machine learning compiler from Meta/PyTorch that used Ahead-of-Time (AOT) compilation. As part of PyTorch's consolidation of its edge strategy, the Glow repository was officially archived on July 1, 2025. ExecuTorch is now the single, official solution for AOT compilation on edge devices.
 *   GitHub: [https://github.com/pytorch/glow](https://github.com/pytorch/glow)
 *   State: Archived / Deprecated
 
@@ -230,24 +237,23 @@ The AMD-Xilinx hardware design suites. Compilers like `hls4ml` and `FINN` genera
 
 ## Workflow
 
-*   **Goal: Mobile phones (ARM CPUs, mobile GPUs).**
-    *   **TensorFlow:** Use TFMOT and deploy with TensorFlow Lite.
-    *   **PyTorch:** Use `torch.ao` and deploy with ExecuTorch.
-*   **Goal: Intel edge devices (CPUs, iGPUs, VPUs).**
-    *   Use the Intel OpenVINO toolchain.
-*   **Goal: Many different heterogeneous edge devices.**
-    *   Use a general-purpose compiler like Apache TVM or ONNX Runtime.
-*   **Goal: Xilinx/AMD FPGA with an easy, "software-like" workflow.**
-    *   Use the "Overlay" philosophy with Vitis AI and the DPU.
-*   **Goal: Xilinx/AMD FPGA with the absolute lowest latency.**
-    *   Use the "Custom Hardware" philosophy.
+*   **Goal: Mobile phones & general edge devices (CPUs, GPUs, NPUs).**
+    *   **Google Ecosystem (TF, JAX, PyTorch):** Quantize with TFMOT (or `ai-edge-torch` for PyTorch) and deploy with **LiteRT**.
+    *   **PyTorch Ecosystem:** Optimize (quantize, sparsify) with **torchao** and deploy with **ExecuTorch**.
+*   **Goal: Intel edge devices (CPUs, iGPUs, NPUs).**
+    *   Use the **Intel OpenVINO** toolchain, which can ingest models from PyTorch, TF, or ONNX.
+*   **Goal: Maximum portability across many different hardware backends.**
+    *   Export to ONNX and use **ONNX Runtime**.
+    *   For maximum performance and control, use **Apache TVM** to compile an ONNX model for a specific target.
+*   **Goal: AMD/Xilinx FPGA with an easy, "software-like" workflow.**
+    *   Use the "Overlay" philosophy with **Vitis AI** and the DPU/AIE accelerators.
+*   **Goal: AMD/Xilinx FPGA with the absolute lowest latency and custom precision.**
+    *   Use the "Custom Hardware" (dataflow) philosophy.
     *   **Keras:** Use QKeras/HGQ with `hls4ml`.
-    *   **PyTorch:** Use Brevitas -> QONNX -> FINN.
-*   **Goal: "My `hls4ml` synthesis is too slow."**
-    *   Use `rule4ml` for pre-synthesis estimation.
-*   **Goal: "My `hls4ml` design is out of DSPs."**
-    *   Use `da4ml` to trade DSPs for LUTs.
+    *   **PyTorch:** Use **Brevitas** -> **QONNX** -> **FINN**.
+*   **Goal: "My model has high dynamic range and needs floating-point precision on an FPGA."**
+    *   Use the Brevitas/QONNX/FINN or hls4ml toolchains, leveraging the new **minifloat** support in QONNX.
 *   **Goal: "My model is a Boosted Decision Tree."**
     *   Use `conifer`.
-*   **Goal: "I need a simpler, interpretable model."**
-    *   Explore Symbolic Regression with PySR.
+*   **Goal: "I need a simpler, more interpretable model than a neural network."**
+    *   Explore Symbolic Regression with **PySR**.
