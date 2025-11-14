@@ -1,12 +1,10 @@
-# Machine Learning Quantization and Efficient Edge Inference Tools
-
-## The ML-to-Hardware Landscape: A Framework for Analysis
+# Summary of ML quantization and edge inference tools
 
 ### Introduction
 
 The deployment of machine learning (ML) models onto edge devices presents a significant challenge. A "semantic gap" exists between high-level models created in frameworks like PyTorch and TensorFlow and the low-level, resource-constrained hardware environments. This requires a complex process of optimization, quantization, and compilation to reduce latency, memory footprint, and power consumption.
 
-## The Deployment Pipeline
+## Deployment
 
 A typical four-stage workflow for deploying an ML model to hardware:
 1.  **Stage 1: Frontend Training & Quantization:** Occurs in the native training framework (e.g., PyTorch, Keras). Involves techniques like Quantization-Aware Training (QAT) and Post-Training Quantization (PTQ).
@@ -14,7 +12,7 @@ A typical four-stage workflow for deploying an ML model to hardware:
 3.  **Stage 3: Backend Compilation & Hardware Synthesis:** A specialized tool ingests the IR and performs hardware-specific optimizations, generating a deployable artifact (e.g., C++ code, HLS for FPGAs).
 4.  **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime:** A library on the edge device loads the compiled model, manages data, and controls the hardware accelerator.
 
-## ML Inference & Synthesis Toolchains
+## Toolchains
 
 Here's how the major tools to the stages:
 
@@ -115,7 +113,7 @@ A cross-platform compiler and runtime from Microsoft that can ingest a floating-
 | Philosophy | Key Tools | Core Technology | Workflow | Pros | Cons |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | Custom layout | hls4ml, FINN | NN-to-HLS/RTL Compilation | (Slow) Generate HLS/RTL -> Synthesize | Ultra-low latency, arbitrary-precision | Potentially slow build times, complex |
-| Runtime instructions | Vitis AI | DPU / AIE Accelerators | (Fast) Compile NN -> Load instructions | "Software-like" workflow, fast iteration | Higher latency, less specialized |
+| Runtime overlay | Vitis AI | DPU / AIE Accelerators | (Fast) Compile NN -> Load instructions | "Software-like" workflow, fast iteration | Higher latency, less specialized |
 
 ### "Custom layout" Philosophy: hls4ml
 
