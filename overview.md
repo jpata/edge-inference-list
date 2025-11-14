@@ -193,6 +193,12 @@ A library for "Distributed Arithmetic (DA)," a "multiplier-less" technique for m
 *   GitHub: [https://github.com/calad0i/da4ml](https://github.com/calad0i/da4ml)
 *   State: Active R&D
 
+### FPGA-Specific Inference Optimization: NeuraLUT-Assemble
+
+A framework for efficient neural network inference on FPGAs using lookup tables (LUTs). It combines mixed-precision techniques with assembling larger neurons from smaller units and incorporating skip-connections to improve accuracy and reduce area-delay product.
+*   arXiv: [https://arxiv.org/abs/2504.00592](https://arxiv.org/abs/2504.00592)
+*   State: Active R&D
+
 ### Pre-Synthesis Resource & Latency Estimation: rule4ml
 
 Provides pre-synthesis estimates of FPGA resource utilization and latency using ML models. This project is currently dormant.
