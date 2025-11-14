@@ -196,7 +196,7 @@ A library for "Distributed Arithmetic (DA)," a "multiplier-less" technique for m
 ### FPGA-Specific Inference Optimization: NeuraLUT-Assemble
 
 A framework for efficient neural network inference on FPGAs using lookup tables (LUTs). It combines mixed-precision techniques with assembling larger neurons from smaller units and incorporating skip-connections to improve accuracy and reduce area-delay product.
-*   arXiv: [https://arxiv.org/abs/2504.00592](https://arxiv.org/abs/2504.00592)
+*   GitHub: [https://github.com/MartaAndronic/NeuraLUT](https://github.com/MartaAndronic/NeuraLUT)
 *   State: Active R&D
 
 ### Pre-Synthesis Resource & Latency Estimation: rule4ml
