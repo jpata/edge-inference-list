@@ -2,19 +2,19 @@
 
 ### Introduction
 
-The deployment of machine learning (ML) models onto edge devices presents a significant challenge. A "semantic gap" exists between high-level models created in frameworks like PyTorch and TensorFlow and the low-level, resource-constrained hardware environments. This requires a complex process of optimization, quantization, and compilation to reduce latency, memory footprint, and power consumption.
+Deploying machine learning (ML) models to edge devices requires bridging the gap between high-level models from frameworks like PyTorch and TensorFlow and low-level, resource-constrained hardware. This is done through optimization, quantization, and compilation to reduce latency, memory usage, and power consumption.
 
 ## Deployment
 
 A typical four-stage workflow for deploying an ML model to hardware:
-1.  **Stage 1: Frontend Training & Quantization:** Occurs in the native training framework (e.g., PyTorch, Keras). Involves techniques like Quantization-Aware Training (QAT) and Post-Training Quantization (PTQ).
-2.  **Stage 2: Intermediate Representation (IR) & Optimization:** The model is exported to a framework-agnostic format, with ONNX being the *lingua franca*.
-3.  **Stage 3: Backend Compilation & Hardware Synthesis:** A specialized tool ingests the IR and performs hardware-specific optimizations, generating a deployable artifact (e.g., C++ code, HLS for FPGAs).
-4.  **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime:** A library on the edge device loads the compiled model, manages data, and controls the hardware accelerator.
+1.  **Stage 1: Frontend Training & Quantization:** Done in the original training framework (e.g., PyTorch, Keras), using techniques like Quantization-Aware Training (QAT) and Post-Training Quantization (PTQ).
+2.  **Stage 2: Intermediate Representation (IR) & Optimization:** The model is exported to a framework-agnostic format, like ONNX.
+3.  **Stage 3: Backend Compilation & Hardware Synthesis:** A tool compiles the IR and performs hardware-specific optimizations, generating a deployable artifact (e.g., C++ code, HLS for FPGAs).
+4.  **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime:** A library on the edge device loads the compiled model, manages data, and runs the hardware accelerator.
 
 ## Toolchains
 
-Here's how the major tools to the stages:
+Here's how the major tools map to the stages:
 
 | Toolchain / Tool | Supported Frontends | Quantization Strategy | Primary Hardware Target(s) |
 | :--- | :--- | :--- | :--- |
@@ -40,100 +40,115 @@ Here's how the major tools to the stages:
 
 ### Introduction to Quantization-Aware Training (QAT)
 
-While 8-bit Post-Training Quantization (PTQ) is standard for mobile deployment, FPGAs and embedded systems benefit from more aggressive quantization (e.g., 4-bit, 2-bit). QAT simulates quantization effects during training, allowing the model to learn robustness and maintain accuracy at very low bit-widths.
+While 8-bit Post-Training Quantization (PTQ) is common for mobile deployment, FPGAs and embedded systems can use more aggressive quantization (e.g., 4-bit, 2-bit). QAT simulates quantization effects during training, which helps the model maintain accuracy at lower bit-widths.
 
 ### TensorFlow / Keras Ecosystem
 
 #### QKeras
 
-A Keras extension for "drop-in replacement" layers that define complex, arbitrary-precision quantization schemes. It's the de facto QAT frontend for the `hls4ml` compiler.
+A Keras extension with layers for arbitrary-precision quantization. It is a QAT frontend for the `hls4ml` compiler. It is now considered stable but has been superseded by HGQ2, which is the recommended QAT tool for `hls4ml`.
 *   GitHub: [https://github.com/google/qkeras](https://github.com/google/qkeras)
+*   State: Stable / Superseded
 
 #### HGQ (High Granularity Quantization)
 
-An advanced QAT algorithm that automatically finds the optimal bit-widths for each parameter, balancing accuracy against a hardware resource budget. It integrates with `hls4ml`.
+A QAT algorithm that automatically finds the optimal bit-width for each parameter based on a hardware resource budget. It integrates with `hls4ml`. This tool has been superseded by HGQ2, which is built on Keras 3 and is the recommended QAT frontend for `hls4ml`.
 *   GitHub (Original): [https://github.com/calad0i/HGQ](https://github.com/calad0i/HGQ)
 *   GitHub (HGQ2): [https://github.com/calad0i/HGQ2](https://github.com/calad0i/HGQ2)
+*   State: Stable / Superseded
 
 #### TensorFlow Model Optimization Toolkit (TFMOT)
 
-Google's official toolkit for optimizing models, focusing on 8-bit integer quantization for deployment to mobile CPUs, GPUs, and EdgeTPUs via TensorFlow Lite (TFLite).
+Google's toolkit for optimizing models. It focuses on 8-bit integer quantization for deployment to mobile CPUs, GPUs, and EdgeTPUs via TensorFlow Lite (TFLite). It is actively maintained and used for deploying models to the TensorFlow Lite ecosystem.
 *   GitHub: [https://github.com/tensorflow/model-optimization](https://github.com/tensorflow/model-optimization)
+*   State: Stable / Mature
 
 ### PyTorch Ecosystem
 
 #### Brevitas
 
-A PyTorch-based QAT library from AMD-Xilinx, serving as the preferred frontend for the FINN compiler. It models the reduced-precision hardware data-path at training time.
+A PyTorch-based QAT library from AMD-Xilinx, and the frontend for the FINN compiler. It models the reduced-precision hardware data-path during training. It is an active project and the QAT frontend for the FINN compiler.
 *   GitHub: [https://github.com/Xilinx/brevitas](https://github.com/Xilinx/brevitas)
+*   State: Active & Strategic
 
 #### HAWQ (Hessian Aware Quantization)
 
-A mixed-precision quantization library that uses second-order information (the Hessian) to automatically determine bit-widths for different layers, allocating more bits to more "sensitive" layers.
+A mixed-precision quantization library that uses second-order information (the Hessian) to determine bit-widths for different layers. This is a dormant academic project.
 *   GitHub: [https://github.com/Zhen-Dong/HAWQ](https://github.com/Zhen-Dong/HAWQ)
+*   State: Dormant
 
 #### PyTorch Native Quantization (torch.ao) & ExecuTorch
 
-PyTorch's native library (`torch.ao`) focuses on 8-bit PTQ and QAT. For edge deployment, **ExecuTorch** is the modern runtime for running quantized PyTorch models on mobile and embedded devices.
+PyTorch's native library (`torch.ao`) focuses on 8-bit PTQ and QAT. For edge deployment, **ExecuTorch** is the runtime for running quantized PyTorch models on mobile and embedded devices. This is the primary toolchain for PyTorch edge deployment. Both `torch.ao` (quantization) and `ExecuTorch` (runtime) are under active development.
 *   GitHub (Quantization): [https://github.com/pytorch/ao](https://github.com/pytorch/ao)
+*   State (torch.ao): Active R&D
 *   GitHub (Edge Runtime): [https://github.com/pytorch/executorch](https://github.com/pytorch/executorch)
+*   State (ExecuTorch): Active & Strategic
 
 ### JAX Ecosystem
 
 #### AQT (Accurate Quantized Training)
 
-A Google library for JAX focused on "What you train is what you serve" (WYTIWYS), ensuring a bit-exact match between simulated training quantization and real serving quantization.
+A Google library for JAX that aims for a bit-exact match between simulated training quantization and serving quantization. AQT is under active development and is focused on research.
 *   GitHub: [https://github.com/google/aqt](https://github.com/google/aqt)
+*   State: Active R&D
 
 #### Qwix
 
-A modern JAX quantization library from Google supporting QAT, PTQ, and modern numerics like int4 and fp8, with a focus on LLMs and accelerators.
+A JAX quantization library from Google supporting QAT, PTQ, and numerics like int4 and fp8, with a focus on LLMs and accelerators. Qwix is an active R&D project.
 *   GitHub: [https://github.com/google/qwix](https://github.com/google/qwix)
+*   State: Active R&D
 
 ## The "Glue": Intermediate Representations
 
 ### ONNX (Open Neural Network Exchange)
 
-Allows models to be moved between frameworks. However, its standard quantization support is limited to 8-bit integers, which is insufficient for arbitrary-precision FPGA models.
+Allows models to be moved between frameworks. Its standard quantization support is limited to 8-bit integers. The ONNX standard is actively developed, but some converters (e.g., for TensorFlow) can be inactive.
 *   GitHub: [https://github.com/onnx/onnx](https://github.com/onnx/onnx)
+*   State: Active & Strategic
 
 ### QONNX (Quantized ONNX)
 
-An extension to ONNX created by the FINN and hls4ml communities. It adds custom operators to represent arbitrary-precision quantization, preserving this crucial information for FPGA backend compilers.
+An extension to ONNX created by the FINN and hls4ml communities. It adds custom operators to represent arbitrary-precision quantization for FPGA backend compilers. It is actively maintained and serves as the IR for the arbitrary-precision FPGA ecosystem.
 *   GitHub: [https://github.com/fastmachinelearning/qonnx](https://github.com/fastmachinelearning/qonnx)
+*   State: Active & Strategic
 
 ### ONNX Runtime
 
-A cross-platform compiler and runtime from Microsoft that can ingest a floating-point ONNX model and perform its own 8-bit quantization, competing with TVM and OpenVINO.
+A cross-platform compiler and runtime from Microsoft that can perform its own 8-bit quantization on a floating-point ONNX model. It is a production-ready solution for deploying ONNX models to diverse hardware.
 *   GitHub: [https://github.com/microsoft/onnxruntime](https://github.com/microsoft/onnxruntime)
+*   State: Active & Strategic
 
 ## End-to-End Compilers for FPGA Synthesis
 
 ### Custom FPGA layout vs. runtime instructions
 
-1.  **"Custom layout:** Used by `hls4ml` and `FINN`, this approach generates new, specialized hardware logic for the neural network, offering the lowest latency at the cost of slow hardware synthesis times.
-2.  **Runtime overlay:** Used by `Vitis AI`, this approach uses a pre-built, fixed AI accelerator (DPU or AIE) on the FPGA. The NN is compiled into instructions for this runtime, offering a faster, more "software-like" workflow.
+1.  **Custom layout:** Used by `hls4ml` and `FINN`, this approach generates new hardware logic for the neural network, offering low latency at the cost of slow hardware synthesis times.
+2.  **Runtime overlay:** Used by `Vitis AI`, this approach uses a pre-built AI accelerator (DPU or AIE) on the FPGA. The NN is compiled into instructions for this runtime, offering a faster workflow.
 
 | Philosophy | Key Tools | Core Technology | Workflow | Pros | Cons |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Custom layout | hls4ml, FINN | NN-to-HLS/RTL Compilation | (Slow) Generate HLS/RTL -> Synthesize | Ultra-low latency, arbitrary-precision | Potentially slow build times, complex |
-| Runtime overlay | Vitis AI | DPU / AIE Accelerators | (Fast) Compile NN -> Load instructions | "Software-like" workflow, fast iteration | Higher latency, less specialized |
+| Custom layout | hls4ml, FINN | NN-to-HLS/RTL Compilation | (Slow) Generate HLS/RTL -> Synthesize | Low latency, arbitrary-precision | Slow build times, complex |
+| Runtime overlay | Vitis AI | DPU / AIE Accelerators | (Fast) Compile NN -> Load instructions | Faster workflow, fast iteration | Higher latency, less specialized |
 
 ### "Custom layout" Philosophy: hls4ml
 
-A Python package with roots in high-energy physics, built for ultra-low latency. It translates models into fully unrolled and pipelined HLS C++ code, creating a massive, parallel hardware circuit.
+A Python package that translates models into HLS C++ code for low latency. It is an active project at the center of a research ecosystem for FPGA co-design.
 *   GitHub: [https://github.com/fastmachinelearning/hls4ml](https://github.com/fastmachinelearning/hls4ml)
+*   State: Active & Strategic
 
 ### "Custom layout" Philosophy: FINN
 
-A dataflow compiler from AMD-Xilinx that builds accelerators by stitching together pre-optimized, composable hardware blocks, leading to more resource-efficient designs. It is the backend for the Brevitas/QONNX pipeline.
+A dataflow compiler from AMD-Xilinx that builds accelerators from pre-optimized hardware blocks. It is the backend for the Brevitas/QONNX pipeline. As the official AMD-Xilinx dataflow compiler, FINN is a mature and stable tool. It is actively maintained as part of the Brevitas -> QONNX -> FINN pipeline.
 *   GitHub: [https://github.com/Xilinx/finn](https://github.com/Xilinx/finn)
 *   HLS Library: [https://github.com/Xilinx/finn-hlslib](https://github.com/Xilinx/finn-hlslib)
+*   State: Stable / Mature
 
 ### "Runtime overlay" Philosophy: Vitis AI & AI Engines
 
-AMD-Xilinx's official development stack. It uses a "Deep-Learning Processor Unit (DPU)" or "AI Engines (AIE)" as a pre-existing accelerator. The user compiles their NN to run on this hardware, providing a mainstream, user-friendly path for FPGA acceleration.
+AMD-Xilinx's development stack. It uses a "Deep-Learning Processor Unit (DPU)" or "AI Engines (AIE)" as a pre-existing accelerator. The user compiles their NN to run on this hardware. This is AMD-Xilinx's 'overlay' solution for FPGAs. The core compiler is slow-moving, but the surrounding tools and tutorials are actively maintained.
 *   GitHub: [https://github.com/Xilinx/Vitis-AI](https://github.com/Xilinx/Vitis-AI)
+*   State: Stable / Mature
 
 ## General-Purpose Compilers for Heterogeneous Edge Inference
 
@@ -141,64 +156,77 @@ These compilers target a wide range of hardware, not just FPGAs.
 
 ### Apache TVM
 
-An open-source ML compilation framework that can ingest models from any framework (via ONNX) and generate high-performance machine code for any target, from ARM CPUs to GPUs and specialized accelerators.
+An open-source ML compilation framework that ingests models from any framework (via ONNX) and generates machine code for targets like ARM CPUs, GPUs, and specialized accelerators. TVM is a compiler with an active codebase and a large research community.
 *   GitHub: [https://github.com/apache/tvm](https://github.com/apache/tvm)
+*   State: Active (Research)
 
 ### Intel OpenVINO
 
-Intel's open-source toolkit for optimizing and deploying AI inference on the Intel ecosystem (CPUs, iGPUs, VPUs). It provides a vertically-integrated, all-in-one solution.
+Intel's open-source toolkit for optimizing and deploying AI inference on Intel hardware (CPUs, iGPUs, VPUs).
 *   GitHub: [https://github.com/openvinotoolkit/openvino](https://github.com/openvinotoolkit/openvino)
+*   State: Active & Strategic
 
 ### Glow
 
-A machine learning compiler from Meta/PyTorch that uses Ahead-of-Time (AOT) compilation to generate a self-contained, dependency-free executable bundle, ideal for embedded systems.
+A machine learning compiler from Meta/PyTorch that used Ahead-of-Time (AOT) compilation to generate a self-contained executable for embedded systems. It was abandoned in favor of the ExecuTorch runtime.
 *   GitHub: [https://github.com/pytorch/glow](https://github.com/pytorch/glow)
+*   State: Archived / Deprecated
 
 ## Advanced Optimization & Specialized Tooling
 
 ### Hardware-Aware Pruning & Quantization: pQuant
 
-A tool for "End-to-End Hardware-Aware Model Compression" that streamlines both pruning and quantization before feeding a model to a backend like `hls4ml`.
+A tool for "End-to-End Hardware-Aware Model Compression" that streamlines both pruning and quantization before feeding a model to a backend like `hls4ml`. This is an active research project.
 *   GitHub: [https://github.com/nroope/PQuant](https://github.com/nroope/PQuant)
+*   State: Active R&D
 
 ### Low-Level Arithmetic Optimization: da4ml
 
-A library for "Distributed Arithmetic (DA)," a "multiplier-less" technique for performing matrix-vector multiplication using only efficient adders and Look-Up Tables (LUTs), trading scarce DSP blocks for more abundant LUTs on an FPGA.
+A library for "Distributed Arithmetic (DA)," a "multiplier-less" technique for matrix-vector multiplication using adders and Look-Up Tables (LUTs), trading DSP blocks for LUTs on an FPGA. A library for 'multiplier-less' arithmetic and a plugin for the `hls4ml` ecosystem.
 *   GitHub: [https://github.com/calad0i/da4ml](https://github.com/calad0i/da4ml)
+*   State: Active R&D
 
 ### Pre-Synthesis Resource & Latency Estimation: rule4ml
 
-Solves the slow hardware synthesis problem by providing near-instant, pre-synthesis estimates of FPGA resource utilization and latency using its own ML models.
+Provides pre-synthesis estimates of FPGA resource utilization and latency using ML models. This project is currently dormant.
 *   GitHub: [https://github.com/IMPETUS-UdeS/rule4ml](https://github.com/IMPETUS-UdeS/rule4ml)
+*   State: Dormant
 
 ## Alternative Model Paradigms
 
 ### Boosted Decision Trees: conifer
 
-A "sister project" to `hls4ml` that translates trained Boosted Decision Trees (from scikit-learn, xgboost, etc.) into FPGA firmware for extreme low-latency inference.
+A project related to `hls4ml` that translates trained Boosted Decision Trees (from scikit-learn, xgboost, etc.) into FPGA firmware for low-latency inference. It is actively maintained.
 *   GitHub: [https://github.com/thesps/conifer](https://github.com/thesps/conifer)
+*   State: Active
 
-### Symbolic Regression: The "Ultimate" Compression
+### Symbolic Regression
 
-Instead of compressing a large NN, Symbolic Regression (SR) tools discover a simple, interpretable symbolic formula that fits the data. This formula is trivial to implement in HLS, resulting in a tiny and efficient hardware model.
-*   **PySR:** A high-performance SR library using genetic programming. [https://github.com/MilesCranmer/PySR](https://github.com/MilesCranmer/PySR)
-*   **SymbolNet:** A neural symbolic regression tool that uses an NN to help discover the symbolic formula. [https://github.com/hftsoi/SymbolNet](https://github.com/hftsoi/SymbolNet)
+Instead of compressing a large NN, Symbolic Regression (SR) tools discover a symbolic formula that fits the data. This formula can be implemented in HLS, resulting in a small and efficient hardware model.
+*   **PySR:** A high-performance SR library using genetic programming. This is an active project with a growing research community.
+    *   GitHub: [https://github.com/MilesCranmer/PySR](https://github.com/MilesCranmer/PySR)
+    *   State: Active R&D
+*   **SymbolNet:** A neural symbolic regression tool that uses an NN to help discover the symbolic formula. This is a dormant, single-commit academic repository.
+    *   GitHub: [https://github.com/hftsoi/SymbolNet](https://github.com/hftsoi/SymbolNet)
+    *   State: Dormant
 
 ## Hardware Abstraction, Runtimes, and Deployment
 
 ### PYNQ (Python Productivity for Zynq)
 
-An open-source project from AMD-Xilinx providing a bootable Linux environment for its SoC platforms. It allows users to control FPGA accelerators (like a Vitis AI DPU or an `hls4ml` design) from Python code running on the ARM CPU.
+An open-source project from AMD-Xilinx providing a bootable Linux environment for its SoC platforms. It allows users to control FPGA accelerators (like a Vitis AI DPU or an `hls4ml` design) from Python code running on the ARM CPU. This is the official AMD-Xilinx project for controlling SoCs with Python.
 *   GitHub: [https://github.com/Xilinx/PYNQ](https://github.com/Xilinx/PYNQ)
+*   State: Active & Strategic
 
 ### DPU-PYNQ
 
-The specific PYNQ package that acts as the driver for the Vitis AI DPU, connecting the Python software world to the DPU hardware.
+The specific PYNQ package that acted as the driver for the Vitis AI DPU. This project is archived and no longer maintained. Teams must migrate to modern Vitis AI runtimes.
 *   GitHub: [https://github.com/Xilinx/DPU-PYNQ](https://github.com/Xilinx/DPU-PYNQ)
+*   State: Archived / Deprecated
 
 ### Vivado / Vitis
 
-The "ground truth" AMD-Xilinx hardware design suites. Compilers like `hls4ml` and `FINN` generate HLS code that is fed into Vitis/Vivado for the final, time-consuming synthesis into a hardware bitstream.
+The AMD-Xilinx hardware design suites. Compilers like `hls4ml` and `FINN` generate HLS code that is fed into Vitis/Vivado for synthesis into a hardware bitstream.
 
 ## Workflow
 
@@ -222,4 +250,4 @@ The "ground truth" AMD-Xilinx hardware design suites. Compilers like `hls4ml` an
 *   **Goal: "My model is a Boosted Decision Tree."**
     *   Use `conifer`.
 *   **Goal: "I need a simpler, interpretable model."**
-    *   Explore Symbolic Regression with PySR or SymbolNet.
+    *   Explore Symbolic Regression with PySR.
