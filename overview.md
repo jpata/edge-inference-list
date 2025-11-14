@@ -16,21 +16,25 @@ A typical four-stage workflow for deploying an ML model to hardware:
 
 Here's how the major tools to the stages:
 
-| Toolchain / Tool | Primary Function (Stage) | Supported Frontends | Quantization Strategy | Primary Hardware Target(s) |
-| :--- | :--- | :--- | :--- | :--- |
-| QKeras / HGQ | Frontend QAT Library (Stage 1) | Keras (TensorFlow, JAX, PyTorch) | Arbitrary-Precision QAT | FPGAs (via hls4ml) |
-| Brevitas | Frontend QAT Library (Stage 1) | PyTorch | Arbitrary-Precision QAT | FPGAs (via FINN) |
-| TFMOT | Frontend QAT/PTQ Library (Stage 1) | TensorFlow / Keras | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs, EdgeTPU (via TFLite) |
-| PyTorch torch.ao | Frontend QAT/PTQ Library (Stage 1) | PyTorch | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs (via ExecuTorch) |
-| QONNX | Intermediate Representation (Stage 2) | ONNX-based (from Brevitas, QKeras) | Arbitrary-Precision | FPGAs (Hand-off to FINN, hls4ml) |
-| hls4ml | NN-to-HLS Compiler (Stage 3) | Keras, PyTorch, ONNX, QONNX | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
-| FINN | Dataflow NN-to-HLS/RTL Compiler (Stage 3) | QONNX (from Brevitas) | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
-| Vitis AI | Model Compiler (Stage 3) & Runtime (Stage 4) | TF, PyTorch, ONNX | 8-bit Integer PTQ/QAT | FPGAs / ACAPs (DPU/AIE Overlay) |
-| Apache TVM | Heterogeneous Compiler Stack (Stage 3) | All (via ONNX) | 8-bit, Mixed-Precision | CPUs, GPUs, Accelerators (e.g., DPU) |
-| Intel OpenVINO | Heterogeneous Compiler (Stage 3) & Runtime (Stage 4) | TF, PyTorch, ONNX | 8-bit Integer | Intel CPUs, iGPUs, VPUs |
-| ExecuTorch | Edge Runtime (Stage 4) | PyTorch | 8-bit (from torch.ao) | Mobile CPUs, GPUs, DSPs |
-| TensorFlow Lite | Edge Runtime (Stage 4) | TensorFlow | 8-bit (from TFMOT) | Mobile CPUs, GPUs, EdgeTPU |
-| PYNQ | Hardware Runtime Environment (Stage 4) | Python | N/A (Controls accelerator) | AMD-Xilinx SoCs (Zynq, Kria) |
+| Toolchain / Tool | Supported Frontends | Quantization Strategy | Primary Hardware Target(s) |
+| :--- | :--- | :--- | :--- |
+| **Stage 1: Frontend Training & Quantization** |
+| QKeras / HGQ | Keras (TensorFlow, JAX, PyTorch) | Arbitrary-Precision QAT | FPGAs (via hls4ml) |
+| Brevitas | PyTorch | Arbitrary-Precision QAT | FPGAs (via FINN) |
+| TFMOT | TensorFlow / Keras | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs, EdgeTPU (via TFLite) |
+| PyTorch torch.ao | PyTorch | 8-bit Integer QAT/PTQ | Mobile CPUs, GPUs (via ExecuTorch) |
+| **Stage 2: Intermediate Representation (IR) & Optimization** |
+| QONNX | ONNX-based (from Brevitas, QKeras) | Arbitrary-Precision | FPGAs (Hand-off to FINN, hls4ml) |
+| **Stage 3: Backend Compilation & Hardware Synthesis** |
+| hls4ml | Keras, PyTorch, ONNX, QONNX | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
+| FINN | QONNX (from Brevitas) | Arbitrary-Precision (from Frontend) | FPGAs (Custom Hardware) |
+| Vitis AI | TF, PyTorch, ONNX | 8-bit Integer PTQ/QAT | FPGAs / ACAPs (DPU/AIE Overlay) |
+| Apache TVM | All (via ONNX) | 8-bit, Mixed-Precision | CPUs, GPUs, Accelerators (e.g., DPU) |
+| Intel OpenVINO | TF, PyTorch, ONNX | 8-bit Integer | Intel CPUs, iGPUs, VPUs |
+| **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime** |
+| ExecuTorch | PyTorch | 8-bit (from torch.ao) | Mobile CPUs, GPUs, DSPs |
+| TensorFlow Lite | TensorFlow | 8-bit (from TFMOT) | Mobile CPUs, GPUs, EdgeTPU |
+| PYNQ | Python | N/A (Controls accelerator) | AMD-Xilinx SoCs (Zynq, Kria) |
 
 ## Frontend Quantization-Aware Training (QAT) Frameworks
 
