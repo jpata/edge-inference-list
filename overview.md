@@ -8,7 +8,7 @@ Deploying machine learning (ML) models to edge devices requires bridging the gap
 
 A typical four-stage workflow for deploying an ML model to hardware:
 1.  **Stage 1: Frontend Training & Quantization:** Done in the original training framework (e.g., PyTorch, Keras), using techniques like Quantization-Aware Training (QAT) and Post-Training Quantization (PTQ).
-2.  **Stage 2 (optional): Intermediate Representation (IR) & Optimization:** The model is exported to a framework-agnostic format, like ONNX.
+2.  **Stage 2: Intermediate Representation (IR) & Optimization:** The model is exported to a framework-agnostic format, like ONNX.
 3.  **Stage 3: Backend Compilation & Hardware Synthesis:** A tool compiles the IR and performs hardware-specific optimizations, generating a deployable artifact (e.g., C++ code, HLS for FPGAs).
 4.  **Stage 4: Hardware-in-the-Loop (HIL) Deployment & Runtime:** A library on the edge device loads the compiled model, manages data, and runs the hardware accelerator.
 
